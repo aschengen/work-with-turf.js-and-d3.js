@@ -1,0 +1,148 @@
+body  { color:#333;
+  background:#2c2c2c;
+  font-size:75%;
+  font-family:"lucida grande",tahoma,verdana,arial,sans-serif;
+}
+    
+h1,h2 { 
+  font-weight: normal; 
+  color:#38D2F3; 
+  padding-left:20px;
+  line-height: 1;
+}
+
+h1 { 
+  font-size:1.5em; 
+}
+
+h2 {
+  font-size: 1.2em; 
+}
+
+h3 {
+  color: #38D2F3;
+}
+
+path.bezirk:hover { 
+  opacity:0.5;
+}
+
+path.intersect:hover {
+  fill:white;
+}
+
+button{
+  background-color: rgb(45, 83, 145);
+  width: 75px;
+  height: 20px;
+  border-radius: 15px;
+  vertical-align: top;
+  color:white;
+  font-weight: bold;
+  font-size: 0.9em;
+  line-height: 0px;
+  box-sizing: border-box;
+  border: 1px solid white;
+  display: inline-block;
+
+
+}
+button:hover:enabled{
+  background-color: rgb(21, 55, 109);
+}
+
+button:disabled{
+  background-color: rgb(97, 117, 150);
+  color: rgb(190, 196, 206);
+}
+
+#pbcontainer{
+
+  border: 1px solid #dddddd;
+  background-color: transparent;
+  border-radius: 7px;
+}
+
+#ranking{
+
+  padding-left: 20px;
+}
+
+path{
+  stroke-linejoin: bevel;
+}
+
+   
+.map {
+  position: relative;
+  border: 1px solid #dddddd;
+  background-color: #cccccc;
+  border-radius: 15px;
+  height: 600px;
+  width: 800px;
+}
+
+.bezirk {
+  fill: #2d5391;
+  opacity: 0.8;
+  stroke: white;
+  stroke-width: 1;
+}
+
+.outline{
+  stroke: white;
+  stroke-width: 1;
+  fill: none;
+}
+
+.siedlung {
+  fill: #ff84a1;
+  stroke: black;
+}
+
+.intersect {
+  fill: black;
+  stroke: white;
+  opacity: 0.5;
+}
+
+.dissolve{
+  stroke: rgb(163, 198, 255);
+  fill: rgb(0, 40, 104);
+}
+.dissolve:hover {
+  stroke: white;
+  fill: red;
+}
+  
+#content {
+  margin-left: 20px;
+  margin-bottom: 0px; 
+
+
+  min-width:1150px;
+}
+
+#left {
+  display: inline-block;
+}
+
+#right {
+  display: inline-block;
+  vertical-align: top;
+  height: 600px;
+  width:300px;
+  margin-left: 20px;
+  padding-left: 20px;
+  border-radius: 15px;
+  border: 1px solid #dddddd;
+  color:white;
+  overflow: auto;
+}
+
+#result {
+  height: 400px;
+  vertical-align: bottom;
+  border-color: green;
+
+}

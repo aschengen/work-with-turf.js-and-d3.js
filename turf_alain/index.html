@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset=utf-8 />
+    <title>Turf JS Practical</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <link rel="stylesheet" href="./css/style.css"></link>
+    <script type="text/javascript" src="./util/d3.js"></script>
+    <script type="text/javascript" src="./util/d3-queue.js"></script>
+    <script type="text/javascript" src="./util/turf.min.js"></script>
+    <script type="text/javascript" src="./util/util.js"></script>
+  </head>
+
+  <body onload="init()">
+    <div id="page">
+      <h2>turf.js - Practical<br />settlement density</h2>
+      <div id="content">
+      
+        <div id="left">
+          <svg width="800" height="600" class="map" id="map"></svg>
+        </div>
+        <div id="right">
+          <div id="log"> 
+            <h3>Informationpanel</h3>
+          </div>
+          <div id="result">
+            <ol id="ranking"></ol>
+          </div>
+        </div>
+        <div>
+          <button id="intersect">intersect</button>
+          <button id="dissolve">dissolve</button>
+          <button id="evaluate">evaluate</button>
+          <div style="width: 150px; height: 10px; background-color: transparent; display: inline-block; padding-top: 4px;">
+            <svg id="pbcontainer" width="100%" height="100%">
+              <rect id="pb" width="0%" height="100%" style="fill: rgb(45, 83, 145);" />
+              <text id="pbtxt" x="50%" y="80%" text-anchor="middle" style="fill:white; font-size: 0.8em;"></text>
+            </svg>          
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <script type="text/javascript">
+
+      var canvas = d3.select("#map"),
+          width = canvas.attr("width"),
+          height = canvas.attr("height"),
+          projection,
+          path,
+          ortsteile,
+          q = d3.queue()
+                .defer(d3.json, "./json/ber_bez.json")
+                .defer(d3.json,"./json/ber_sied.json")
+                .await(analyze);
+  
+
+      function analyze(error, d1, d2) {
+        if(error)
+          console.log(error);
+
+        projection = d3.geoMercator().fitSize([width, height], d2);
+        path = d3.geoPath().projection(projection);
+        ortsteile = d1;
+      
+        drawLayer(d2, "siedlung");
+        drawLayer(d1, "bezirk");
+        d3.selectAll("path.bezirk").on("click", d => console.log(d.properties.Name));
+        d3.select("#intersect").on("click", () => intersect(d1,d2));
+       
+      }
+
+      function intersect(data1, data2){
+        d3.select("#intersect").attr("disabled", "disabled");
+        
+        var intcollection = [],
+            w = new Worker("./js/intworker.js"),
+            worker = "Intersect";
+        w.postMessage([data1,data2]);
+
+        w.onmessage = (e) => {
+          if(e.data < 100)
+            updateProgress(worker,e.data);
+          else{
+            updateProgress(worker,100);
+            intcollection = e.data;
+            d3.select("#dissolve").attr("disabled",null).on("click", () => dissolve(intcollection));
+            drawLayer(intcollection, "intersect");
+          }
+        }  
+      }
+
+      function updateProgress(worker,progress){
+        d3.select("#pb").attr("width",progress+"%");
+        if(worker != "")
+          d3.select("#pbtxt").text(worker+": "+Math.round(progress)+" %");
+        else
+          d3.select("#pbtxt").text("");
+      }
+
+      function dissolve(data) {
+        d3.select("#dissolve").attr("disabled", "disabled");
+
+        var disscollection = [],
+            w = new Worker("./js/dissworker.js"),
+            worker = "Dissolve";
+        w.postMessage(data);
+
+        w.onmessage = (e) => {
+          if(e.data < 100){
+            updateProgress(worker,e.data);
+          }
+          else{
+            updateProgress(worker,100);
+            disscollection = e.data;
+            d3.select("#evaluate").attr("disabled",null).on("click", () => evaluate(ortsteile,disscollection));
+            
+            removeLayer("intersect");
+            drawLayer(disscollection,"dissolve");
+            d3.selectAll("path.dissolve").on("click", d => console.log(d.properties.Name));
+          }
+        }
+      }
+
+      function evaluate(primaryLayer, secondaryLayer){
+        d3.select("#evaluate").attr("disabled", "disabled");
+
+        var evalcollection = [],
+            w = new Worker("./js/evalworker.js"),
+            worker = "Evaluate";
+        w.postMessage([primaryLayer, secondaryLayer]);
+
+        w.onmessage = (e) => {
+          d3.select("#ranking")
+            .selectAll("li")
+            .data(e.data)
+            .enter()
+            .append("li")
+            .text( d => {return d[0]+": "+d[1]+"%"});         
+        }
+        updateProgress("",0);
+      }
+
+      function removeLayer(classname){
+        d3.selectAll("."+classname).remove();
+
+        if(classname != "outline")
+          document.getElementById("log").innerHTML += getTime()+" - Removed Layer - class: <strong>"+classname+"</strong><br />";
+      }
+
+      function drawLayer(layername, classname){
+        if(d3.selectAll("."+classname)._groups[0].length > 0)
+          removeLayer(classname);
+
+        var areas = canvas.selectAll("path"+classname)
+                          .data(layername.features)
+                          .enter()
+                          .append("path")
+                          .attr("d", path)
+                          .attr("class", classname);
+
+
+
+        if(classname != "outline"){
+          
+          document.getElementById("log").innerHTML += getTime()+" - Added Layer - class: <strong>"+classname+"</strong><br />";
+          drawLayer(ortsteile, "outline");
+        }
+      }
+
+      function init(){
+        d3.select("#intersect").attr("disabled", null);
+        d3.select("#dissolve").attr("disabled", "disabled");
+        d3.select("#evaluate").attr("disabled", "disabled");
+      }
+
+    </script>  
+  </body>
+</html>
